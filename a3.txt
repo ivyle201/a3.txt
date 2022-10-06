@@ -1,0 +1,142 @@
+[vivian@sjsu A3]$ script a3.txt
+Script started, file is a3.txt
+
+
+Q1) Represent influence between users as a directional graph of users, save as a list of lines, as described next:
+Represent a user A getting a reply from another user B as a line A_ID,B_ID (A_ID and B_ID are the comma separated IDs of user A and B, though you can also tab-separate A_ID and B_ID if it fits you). You can get the replies from the file "downloaded_tweets_extend_original_nolf2.tsv".
+
+[vivian@sjsu A3]$ grep "type=replied_to" downloaded_tweets_extend_original_nolf2_NOBOT.tsv | awk -F "\t" 'BEGIN{print "A_ID\tB_ID"} {print $6,"\t" $2}' | sort -n > Q1.tsv
+
+[vivian@sjsu A3]$ head Q1.tsv
+A_ID	B_ID
+3832 	1412897313907900420
+3832 	246667561
+465973 	2295967047
+612473 	267377062
+612473 	267377062
+621533 	2147604445
+807095 	73452506
+1294741 5026541
+1652541 1388928926869753857
+
+
+
+
+Q2) Produce clusters (groups of influence) by ranking the users who got replies by their number of replies. Keep only the largest clusters by "cutting" at a threshold of 3; in order words, keep just the graph for users who got 3 or more replies (@banish suggested on Discord there are 110-120 such users, excluding the bots who replied to themselves).
+
+[vivian@sjsu A3]$ tail -n +2 Q1.tsv | cut -f1 | sort | uniq -c | sort -nr | awk '{if ($1>=3) print $1}' | uniq -c | sort -nr | awk '{print $1"\t"$2}' | sort -k2 -n > Q2.tsv
+
+[vivian@sjsu A3]$ cat Q2.tsv
+53      3
+25      4
+7       5
+8       6
+2       7
+5       8
+3       9
+3       10
+1       11
+1       12
+1       13
+1       14
+1       27
+1       45
+
+
+Q3) Plot the sizes of clusters as a histogram to show how many clusters of each size resulted.   
+                                                                                                                                                        
+[vivian@sjsu A3]$ ls *.svg
+Q3_plot.svg
+
+
+gnuplot> set terminal svg
+gnuplot> set style data histograms
+gnuplot> set style fill solid 1.0 border -1
+gnuplot> set output "../../A3/Q3_plot.svg"
+gnuplot> set xlabel "Influence"
+gnuplot> set ylabel "Number of Users"
+gnuplot> plot '../../A3/Q2.tsv' using 1 : xtic(2)
+
+
+
+Q4) Find the 30 most frequent hashtags in these largest clusters of replies you kept (for the users/tweets that got replied to, not the users/tweets doing the replies). Compare to the 30 most frequent hashtags you found in assignment #2 (overall, question 5). Which hashtags appear in these clusters that did not appear in the frequent hashtags from assignment #2 (you can use sort and diff for this)?
+
+[vivian@sjsu A3]$ tail -n +2 q1A3_final.tsv | cut -f1 | sort | uniq -c | sort -nr | awk '{if ($1>=3) print $2}' | uniq > Q4_authors.tsv
+[vivian@sjsu A3]$ head Q4_authors.tsv
+3453306553
+29447428
+1238370241169616897
+1108565574
+19739126
+21525682
+95091601
+48624704
+1462548977367359490
+26217297
+
+[vivian@sjsu A3]$  grep "type=replied_to" downloaded_tweets_extend_original_nolf2_NOBOT.tsv | awk -F "\t" '{print $4"\t"$6}' | fgrep -f Q4_authors.tsv | cut -f1 | tr ',' '\n' | tr '"' '\n'| tr '[:upper:]' '[:lower:]' | grep . | sort | uniq -c | sort -nr | awk '{print $2}' | head -n 30 > Q4_30_hashtags.tsv
+
+[vivian@sjsu A3]$ cat Q4_hashtags.tsv 
+auspol
+ukraine
+longcovid
+covid19
+alboforpm
+gutlessscomo
+ausvotes
+ableg
+standwithukraine
+covid
+lnpcorruptionparty
+johnsonoutday25
+เจ้าแก้มก้อน
+lnpdisgrace
+russia
+covidisnotover
+morrison
+lauterbachbleibt
+diemaskebleibtauf
+brexit
+bccrss
+ausvotes2022
+australia
+wirwollenmaskenpflicht
+votejoshout
+votefordout2022
+votebluetosaveamerica
+scottythefailure
+lnp
+lemmmmmmrip
+
+
+[vivian@sjsu A3]$ fgrep -f ../A2/q5A2_top30_hashtags.tsv -vw Q4_30_hashtags.tsv > Q4_diff.tsv
+[vivian@sjsu A3]$ cat Q4_diff.tsv
+alboforpm
+gutlessscomo
+ausvotes
+lnpcorruptionparty
+johnsonoutday25
+lnpdisgrace
+covidisnotover
+morrison
+lauterbachbleibt
+diemaskebleibtauf
+diemaskebleibtauf
+brexit
+bccrss
+ausvotes2022
+australia
+wirwollenmaskenpflicht
+votejoshout
+votefordout2022
+votebluetosaveamerica
+scottythefailure
+lnp
+lemmmmmmrip
+
+[vivian@sjsu A3]$ exit
+Script done, file is a3.txt
+
+[vivian@sjsu A3]$ vi a3.txt
+[vivian@sjsu A3]$
+
